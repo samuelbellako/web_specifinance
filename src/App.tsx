@@ -1017,10 +1017,10 @@ export default function App() {
                         <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Estrategia financiera, comercial y de marketing alineada.
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Dashboards y seguimiento de KPIs clave.
+                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Dashboards ejecutivos y seguimiento de KPIs clave.
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Soporte para crecimiento, inversión y expansión.
+                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Soporte estratégico para crecimiento, inversión y expansión.
                       </li>
                     </ul>
                   </div>
@@ -1090,13 +1090,13 @@ export default function App() {
                         <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Planeación estratégica de marketing y crecimiento.
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Optimización de inversión publicitaria y demanda.
+                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Optimización de inversión publicitaria y generación de demanda.
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Análisis de datos comerciales y de clientes.
+                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Análisis de datos comerciales y comportamiento de clientes.
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Medición de indicadores de retorno de inversión.
+                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Medición de indicadores de crecimiento y retorno de inversión.
                       </li>
                     </ul>
                   </div>

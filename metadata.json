@@ -1,6 +1,6 @@
 {
-  "name": "Specifinance",
-  "description": "Plataforma boutique de dirección financiera, consultoría corporativa y cotizaciones en tiempo real basadas en datos.",
+  "name": "specifinance",
+  "description": "Plataforma de direccion financiera para empresas.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
