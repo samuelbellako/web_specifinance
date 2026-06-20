@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Lead, Booking, OutgoingEmailLog, QuoteCalculated } from './types';
 import { INITIAL_LEADS, INITIAL_BOOKINGS } from './data';
-import Cotizador from './components/Cotizador';
 import Scheduler from './components/Scheduler';
 import AdminDashboard from './components/AdminDashboard';
+import SmeSolutions from './components/SmeSolutions';
+import ServiceModal from './components/ServiceModal';
 import { 
   TrendingUp, BarChart3, Receipt, Users, ShieldCheck, Mail, Phone, MapPin, 
   ArrowRight, Sparkles, CheckCircle2, ChevronRight, X, Play, Settings, 
@@ -43,16 +44,19 @@ export default function App() {
 
   // Success indicator for the main contact form
   const [formSubmitted, setFormSubmitted] = useState(false);
+
+  // Service Modal state
+  const [activeServiceModal, setActiveServiceModal] = useState<string | null>(null);
+
+  // Handler to set selected need from SmeSolutions
+  const handleSelectSmeNeed = (serviceName: string, needsStr: string) => {
+    setFormService(serviceName);
+    setFormNeeds(needsStr);
+  };
   const [diagnosticLeadCreated, setDiagnosticLeadCreated] = useState<Lead | null>(null);
 
   // States for the 2-Pillar Interlocking Corporate Hub
   const [activePillarTab, setActivePillarTab] = useState<'financial' | 'marketing' | 'synergy'>('financial');
-  const [pillarFinRevenue, setPillarFinRevenue] = useState(60000);
-  const [pillarFinEbitda, setPillarFinEbitda] = useState(12);
-  const [pillarMktSpend, setPillarMktSpend] = useState(5000);
-  const [pillarMktCpl, setPillarMktCpl] = useState(25);
-  const [pillarMktConversion, setPillarMktConversion] = useState(3.5);
-  const [pillarMktAov, setPillarMktAov] = useState(1200);
 
   // Handles updating lead states inside CRM
   const handleUpdateLeadStatus = (leadId: string, newStatus: Lead['status']) => {
@@ -74,29 +78,6 @@ export default function App() {
   // Append outbound Resend email log
   const handleSendEmailLog = (log: OutgoingEmailLog) => {
     setEmailLogs(prev => [log, ...prev]);
-  };
-
-  // Custom live calculation apply handler (autofills form with estimated rates!)
-  const handleQuoteApplied = (quote: QuoteCalculated) => {
-    setFormService(quote.serviceName);
-    setFormSize(
-      quote.teamSize > 100 ? '+200 empleados' :
-      quote.teamSize > 40 ? '51 - 200 empleados' :
-      quote.teamSize > 10 ? '11 - 50 empleados' : '1 - 10 empleados'
-    );
-    setFormNeeds(
-      prev => {
-        const addon = `[Plan Est. Cotizado: ${quote.serviceName} | Estimado Retenedor: $${quote.estimatedPrice.toLocaleString()} USD | EBITDA Proyectado: +${quote.potentialEbitdaGain}%]`;
-        if (prev.includes('[Plan Est. Cotizado')) return prev;
-        return prev ? `${prev}\n\n${addon}` : addon;
-      }
-    );
-    
-    // Smooth scroll immediately down to diagnostic section so user can submit it
-    const formSection = document.getElementById('contacto');
-    if (formSection) {
-      formSection.scrollIntoView({ behavior: 'smooth' });
-    }
   };
 
   // Submit main Public Contact/Diagnostic Form
@@ -172,35 +153,15 @@ export default function App() {
   return (
     <div className="min-h-screen bg-background-soft text-deep-navy selection:bg-muted-gold/30">
       
-      {/* Premium Notification bar */}
-      <div className="bg-deep-navy text-white text-[11px] font-sans font-medium py-2 px-4 shadow-inner text-center flex flex-col md:flex-row items-center justify-center gap-3">
-        <span>
-          🚀 <strong className="text-indigo-400 uppercase">Consola de Simulación Activa:</strong> Evaluador del sistema.
-        </span>
-        <div className="flex gap-2">
-          <button 
-            type="button"
-            onClick={() => {
-              setAdminMode(!adminMode);
-              setMobileMenuOpen(false);
-            }}
-            className="bg-muted-gold hover:bg-indigo-700 text-white px-3 py-0.5 rounded-full text-[10px] font-bold tracking-wider transition-colors cursor-pointer"
-            id="toggle-admin-bar"
-          >
-            {adminMode ? '💻 Regresar a Landing Page' : '📊 Entrar a Consola CRM (Backoffice)'}
-          </button>
-        </div>
-      </div>
-
       {/* Main TopNavBar */}
       <nav id="nav-primary" className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-border-subtle shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 md:px-12 py-4 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-4 flex justify-between items-center">
           <a href="#" className="font-heading font-extrabold text-2xl text-deep-navy tracking-tight flex items-center gap-2">
             <span className="w-2.5 h-6 bg-muted-gold rounded-sm block" />
             Specifinance
           </a>
 
-          {/* Desktop Nav menus */}
+          {/* Desktop Nav menus - Simulador removed */}
           {!adminMode && (
             <div className="hidden md:flex gap-8 items-center">
               <a href="#inicio" className="text-xs font-semibold uppercase tracking-wider text-deep-navy border-b-2 border-deep-navy pb-1">
@@ -211,9 +172,6 @@ export default function App() {
               </a>
               <a href="#servicios" className="text-xs font-semibold uppercase tracking-wider text-charcoal-text hover:text-deep-navy transition-colors">
                 Servicios
-              </a>
-              <a href="#cotizador" className="text-xs font-semibold uppercase tracking-wider text-charcoal-text hover:text-deep-navy transition-colors">
-                Simulador
               </a>
               <a href="#metodologia" className="text-xs font-semibold uppercase tracking-wider text-charcoal-text hover:text-deep-navy transition-colors">
                 Metodología
@@ -227,21 +185,22 @@ export default function App() {
             </div>
           )}
 
-          <div className="flex gap-2 items-center">
-            {/* Toggle bar inside nav */}
-            <button
-               onClick={() => {
-                 setAdminMode(!adminMode);
-                 setMobileMenuOpen(false);
-               }}
-               className={`hidden sm:inline-flex text-xs font-semibold uppercase tracking-wider border px-3 py-1.5 rounded transition-all cursor-pointer items-center gap-1 ${
-                 adminMode ? 'border-deep-navy bg-deep-navy text-white hover:bg-black' : 'border-border-subtle text-charcoal-text hover:border-deep-navy'
-               }`}
-               id="nav-crm-toggle"
-            >
-              <Database className="w-3.5 h-3.5" />
-              {adminMode ? 'Ver Web' : 'Backoffice CRM'}
-            </button>
+          <div className="flex gap-2.5 items-center">
+             {/* Elegant, discrete Lock button to access backoffice / CRM safely */}
+             <button 
+                onClick={() => {
+                  setAdminMode(!adminMode);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className={`p-1.5 rounded-lg border transition-all cursor-pointer flex items-center justify-center ${
+                  adminMode 
+                    ? 'bg-deep-navy text-white border-deep-navy hover:bg-black opacity-100' 
+                    : 'text-slate-300 hover:text-deep-navy hover:bg-slate-50 border-transparent hover:border-slate-200 opacity-20 hover:opacity-100'
+                }`}
+                id="nav-crm-toggle-lock"
+             >
+               <Lock className="w-3.5 h-3.5" />
+             </button>
 
             <a 
               href="#contacto"
@@ -272,26 +231,27 @@ export default function App() {
               <a href="#servicios" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-charcoal-text block py-1.5 border-b border-slate-100">
                 Servicios
               </a>
-              <a href="#cotizador" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-charcoal-text block py-1.5 border-b border-slate-100 font-bold text-deep-navy">
-                🔄 Simulador Financiero Est.
-              </a>
               <a href="#metodologia" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-charcoal-text block py-1.5 border-b border-slate-100">
                 Metodología
               </a>
               <a href="#resultados" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-charcoal-text block py-1.5 border-b border-slate-100">
                 Resultados
               </a>
-              <a href="#contacto" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-charcoal-text block py-1.5 ">
+              <a href="#contacto" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-charcoal-text block py-1.5 border-b border-slate-100">
                 Contacto
               </a>
+              
+              {/* Subtle mobile portal unlock link */}
               <button
                 onClick={() => {
                   setAdminMode(!adminMode);
                   setMobileMenuOpen(false);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="w-full bg-slate-100 text-deep-navy font-bold py-2 px-3 text-xs uppercase tracking-wider rounded text-center border border-border-subtle"
+                className="w-full text-left py-2 text-indigo-700 font-bold flex items-center gap-1.5 text-xs uppercase"
               >
-                {adminMode ? '💻 Volver a Página Web' : '📊 Ir a CRM de Clientes'}
+                <Lock className="w-3.5 h-3.5" />
+                {adminMode ? 'Ver Landing Page' : 'Acceso Socios (CRM)'}
               </button>
             </div>
           </div>
@@ -436,7 +396,7 @@ export default function App() {
                 </h1>
                 
                 <p className="text-charcoal-text text-base md:text-lg max-w-xl leading-relaxed">
-                  En <strong className="text-deep-navy">Specifinance</strong> ayudamos a pequeñas y medianas empresas a tomar mejores decisiones financieras, optimizar su rentabilidad y ejecutar estrategias de crecimiento respaldadas por datos reales.
+                  Actuamos como la dirección financiera externa de tu empresa, alineando las decisiones comerciales, financieras y de crecimiento para maximizar la rentabilidad y el impacto de cada inversión.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
@@ -486,7 +446,7 @@ export default function App() {
             <div className="max-w-7xl mx-auto px-6 md:px-12 space-y-12">
               <div className="text-center max-w-3xl mx-auto space-y-4">
                 <h2 className="font-heading font-extrabold text-2xl md:text-3xl lg:text-4xl text-deep-navy leading-tight">
-                  Muchas empresas crecen sin saber realmente qué está impulsando o frenando sus resultados.
+                  Transformamos datos financieros y comerciales en estrategias de crecimiento medibles y rentables
                 </h2>
                 <div className="w-12 h-1 bg-muted-gold mx-auto rounded" />
               </div>
@@ -545,143 +505,167 @@ export default function App() {
             </div>
           </section>
 
-          {/* Value Connection Block */}
+          {/* Value Connection Block - Visual & High Impact */}
           <section id="que-hacemos" className="py-24 bg-white">
-            <div className="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            <div className="max-w-7xl mx-auto px-6 md:px-12 space-y-16">
               
-              <div className="space-y-8">
-                <h2 className="font-heading font-extrabold text-3xl md:text-4xl text-deep-navy leading-tight tracking-tight">
-                  Somos la conexión operativa entre la dirección financiera y el crecimiento de su empresa.
-                </h2>
-
-                <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+                <div className="lg:col-span-6 space-y-6">
+                  <span className="inline-block py-1 px-3 bg-indigo-50 border border-indigo-100 rounded text-indigo-700 font-sans text-[11px] tracking-widest uppercase font-semibold">
+                    🎯 El Enlace que le Faltaba a tu Negocio
+                  </span>
                   
-                  <div className="flex gap-4 items-start">
-                    <span className="p-2 bg-slate-100 rounded-lg text-deep-navy">
-                      <TrendingUp className="w-5 h-5 text-muted-gold" />
-                    </span>
-                    <div>
-                      <h4 className="font-heading font-bold text-base text-deep-navy">
-                        Audi-Diagnosticamos en Profundidad
-                      </h4>
-                      <p className="text-charcoal-text text-sm mt-1 leading-relaxed">
-                        Auditoría profunda de estados financieros, márgenes de distribución y procesos comerciales para encontrar el origen exacto de las pérdidas o la ineficiencia.
+                  <h2 className="font-heading font-extrabold text-3.5xl md:text-5xl text-deep-navy leading-tight tracking-tight">
+                    La única firma que unifica <span className="text-indigo-650">Finanzas, Marketing y Datos</span>.
+                  </h2>
+                  
+                  <p className="text-charcoal-text text-sm md:text-base leading-relaxed">
+                    Las agencias de marketing suelen quemar capital sin calcular márgenes, y los contadores tradicionales solo registran pérdidas cuando ya ocurrieron. Nosotros unificamos ambas fuerzas bajo un modelo integrado con retorno medible.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 group">
+                    <div className="p-5 bg-gradient-to-br from-indigo-50/50 to-white/50 rounded-xl border border-indigo-100 flex flex-col gap-1.5 transition-all hover:scale-[1.02] hover:-translate-y-1 hover:shadow-lg hover:border-indigo-200 duration-300">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="bg-indigo-100 p-1.5 rounded-md">
+                          <TrendingUp className="w-4 h-4 text-indigo-600" />
+                        </div>
+                        <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Crecimiento Real</span>
+                      </div>
+                      <span className="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-deep-navy to-indigo-600 leading-none drop-shadow-sm transition-all">+24%</span>
+                      <span className="text-xs font-bold text-slate-800 font-sans tracking-tight uppercase">Incremento del EBITDA</span>
+                      <p className="text-[10px] text-slate-500 leading-relaxed mt-1 border-t border-indigo-50 pt-2">
+                        Mejora promedio en rentabilidad tras optimizar estructuras de costos e inversión comercial.
+                      </p>
+                    </div>
+                    <div className="p-5 bg-gradient-to-br from-green-50/50 to-white/50 rounded-xl border border-green-100 flex flex-col gap-1.5 transition-all hover:scale-[1.02] hover:-translate-y-1 hover:shadow-lg hover:border-green-200 duration-300">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="bg-green-100 p-1.5 rounded-md">
+                          <BarChart3 className="w-4 h-4 text-green-600" />
+                        </div>
+                        <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Visibilidad Total</span>
+                      </div>
+                      <span className="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-400 leading-none drop-shadow-sm transition-all">100%</span>
+                      <span className="text-xs font-bold text-slate-800 font-sans tracking-tight uppercase">Decisiones Data-Driven</span>
+                      <p className="text-[10px] text-slate-500 leading-relaxed mt-1 border-t border-green-50 pt-2">
+                        Cero conjeturas. Sustentamos el crecimiento integrando tableros de control y flujo de caja diario.
                       </p>
                     </div>
                   </div>
-
-                  <div className="flex gap-4 items-start">
-                    <span className="p-2 bg-slate-100 rounded-lg text-deep-navy">
-                      <BarChart3 className="w-5 h-5 text-muted-gold" />
-                    </span>
-                    <div>
-                      <h4 className="font-heading font-bold text-base text-deep-navy">
-                        Diseñamos Estrategias de Unidad
-                      </h4>
-                      <p className="text-charcoal-text text-sm mt-1 leading-relaxed">
-                        Evaluamos y creamos el roadmap financiero y comercial enfocado en maximizar el flujo de caja operativo de la compañía y el EBITDA.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4 items-start">
-                    <span className="p-2 bg-slate-100 rounded-lg text-deep-navy">
-                      <UserCheck className="w-5 h-5 text-muted-gold" />
-                    </span>
-                    <div>
-                      <h4 className="font-heading font-bold text-base text-deep-navy">
-                        Acompañamos Ejecuciones Reales
-                      </h4>
-                      <p className="text-charcoal-text text-sm mt-1 leading-relaxed">
-                        No entregamos un PDF teórico para archivar. Trabajamos hombro a hombro con la gerencia general de forma semanal para asegurar que cada recomendación se implemente con éxito.
-                      </p>
-                    </div>
-                  </div>
-
                 </div>
-              </div>
 
-              {/* Graphic presentation board */}
-              <div className="relative">
-                <img 
-                  alt="Estrategia Corporativa" 
-                  className="rounded-2xl boutique-shadow w-full object-cover max-h-[480px]" 
-                  referrerPolicy="no-referrer"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGSRRl3wHUG4Y-caU7d5POTX2hx0UBv7REt8DSHwyV7jstZwMCK57GWQbJ-Zz7-ctNh_UuDacGa5AN_JggwhHQ7f5JEujLHy7OG2lkUSlxZ4Qt8F6jUhClWCN_rdmVWEHKl7Ey8lgzLl5NplFFRDkaW1cX619YvmanZ9No-VCJbpPacBusO0y0-2AE85hAXA9H_gqfQXWyNVI6it6rTCUZBKuOnQiWk98iHzh3ro_WGMORFmuFLH446rhKLP7me-lPg0jj9QlV87Y" 
-                />
+                {/* Grid Visual Cards: High Converting Delivery */}
+                <div className="lg:col-span-6 space-y-4">
+                  <div className="bg-surface-gray hover:bg-white p-5 rounded-2xl border border-border-subtle transition-all duration-300 hover:shadow-md flex gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 flex-shrink-0 border border-indigo-100">
+                      <TrendingUp className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-heading font-bold text-sm text-deep-navy">1. Diagnóstico de Fugas y Margen Real</h4>
+                      <p className="text-charcoal-text text-xs mt-1 leading-relaxed">
+                        Auditoría profunda e identificación precisa de los canales y clientes que de verdad generan rentabilidad, cortando fugas de capital de forma inmediata.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-surface-gray hover:bg-white p-5 rounded-2xl border border-border-subtle transition-all duration-300 hover:shadow-md flex gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 flex-shrink-0 border border-orange-100">
+                      <BarChart3 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-heading font-bold text-sm text-deep-navy">2. Diseño de Estrategias y Unit Economics</h4>
+                      <p className="text-charcoal-text text-xs mt-1 leading-relaxed">
+                        Sincronizamos tus presupuestos publicitarios con el coste contable de tu operación, garantizando que cada peso invertido en pauta traiga un retorno positivo a caja.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-surface-gray hover:bg-white p-5 rounded-2xl border border-border-subtle transition-all duration-300 hover:shadow-md flex gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-green-600 flex-shrink-0 border border-green-100">
+                      <UserCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-heading font-bold text-sm text-deep-navy">3. Co-Ejecución Semanal y Dashboards</h4>
+                      <p className="text-charcoal-text text-xs mt-1 leading-relaxed">
+                        No entregamos un PDF teórico para archivar. Montamos tableros de control interactivos y trabajamos junto a ti para asegurar el cumplimiento exacto de las metas.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
             </div>
           </section>
 
-          {/* Specifinance vs Traditional Differential Table */}
+          {/* Specifinance vs Traditional Differential Table - Optimized Comparison */}
           <section className="py-20 bg-deep-navy text-white border-b border-white/10">
             <div className="max-w-7xl mx-auto px-6 md:px-12 space-y-12">
               <div className="text-center space-y-3">
-                <h2 className="font-heading font-extrabold text-3xl md:text-4xl">
-                  No entregamos solo diagnósticos.{' '}
-                  <span className="text-muted-gold underline decoration-growth-green">Construimos soluciones.</span>
+                <h2 className="font-heading font-extrabold text-3xl md:text-4xl text-white">
+                  ¿Por qué las empresas eligen a <span className="text-muted-gold font-bold">Specifinance</span>?
                 </h2>
                 <p className="text-white/60 text-xs tracking-wider uppercase font-mono max-w-lg mx-auto">
-                  La diferencia radical de trabajar con un socio experto en lugar de una consultora contable común.
+                  La diferencia radical de trabajar con un partner de crecimiento estratégico versus resolver las cosas a ciegas.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 border border-white/10 rounded-xl overflow-hidden shadow-2xl">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
-                {/* Traditional */}
-                <div className="p-8 md:p-12 hover:bg-white/5 bg-white/[0.02] border-b lg:border-b-0 lg:border-r border-white/10 space-y-8">
-                  <h3 className="font-heading font-bold text-lg text-white/50 flex items-center gap-2">
-                    <X className="w-5 h-5 text-red-500" />
-                    Consultoría Financiera Tradicional
-                  </h3>
-                  <ul className="space-y-5 text-xs text-white/70 leading-relaxed md:text-sm">
-                    <li className="flex gap-3 items-start">
-                      <span className="text-red-500 text-lg font-bold flex-shrink-0 mt-0.5">•</span>
-                      Informes estáticos en PowerPoint o PDF pesados que terminan archivados en un cajón.
-                    </li>
-                    <li className="flex gap-3 items-start">
-                      <span className="text-red-500 text-lg font-bold flex-shrink-0 mt-0.5">•</span>
-                      Enfoque puramente tributario o fiscal sin una visión integrada de negocio y comercial.
-                    </li>
-                    <li className="flex gap-3 items-start">
-                      <span className="text-red-500 text-lg font-bold flex-shrink-0 mt-0.5">•</span>
-                      Desconexión radical entre la inversión publicitaria de marketing y los números consolidados de caja.
-                    </li>
-                  </ul>
+                {/* Traditional Side (Condensed Red) */}
+                <div className="bg-white/[0.02] border border-white/10 p-6 md:p-8 rounded-2xl space-y-5 transition-all hover:bg-white/[0.04]">
+                  <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+                    <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center text-red-500">
+                      <X className="w-4 h-4" />
+                    </div>
+                    <span className="text-xs font-semibold tracking-wider text-slate-350 uppercase">El Camino Común e Ineficiente</span>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-bold text-white/90">Informes contables estáticos retrospectivos</h4>
+                      <p className="text-[11px] text-white/50 leading-relaxed">Te dicen cuánto dinero perdiste el mes pasado, pero no cómo prevenir pérdidas hoy ni dónde invertir mañana.</p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-bold text-white/90 font-sans">Agencias de marketing desconectadas</h4>
+                      <p className="text-[11px] text-white/50 leading-relaxed">Persiguen "likes" y vistas vanidosas sin comprender los unit economics del producto ni el flujo libre de caja real.</p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-bold text-white/90">Decisiones intuitivas sin base contable</h4>
+                      <p className="text-[11px] text-white/50 leading-relaxed">Contrataciones de personal o aumentos de inventarios basados en corazonadas, arriesgando innecesariamente el capital.</p>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Specifinance */}
-                <div className="p-8 md:p-12 bg-white/[0.08] relative space-y-8">
-                  <span className="absolute top-4 right-4 bg-growth-green text-white font-mono text-[9px] px-2.5 py-0.5 rounded uppercase font-bold tracking-widest">
-                    El Diferencial
-                  </span>
-                  
-                  <h3 className="font-heading font-bold text-lg text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-growth-green" />
-                    Specifinance Boutique Business Model
-                  </h3>
+                {/* Specifinance Side (Green Glow & Clear Impact) */}
+                <div className="bg-white/[0.06] border-2 border-indigo-500/30 p-6 md:p-8 rounded-2xl space-y-5 relative overflow-hidden transition-all hover:border-indigo-400">
+                  <div className="absolute top-0 right-0 bg-growth-green text-deep-navy font-mono text-[9px] px-3 py-1 uppercase font-bold tracking-widest rounded-bl">
+                    Socio de Crecimiento
+                  </div>
 
-                  <ul className="space-y-5 text-xs text-white/90 leading-relaxed md:text-sm">
-                    <li className="flex gap-3 items-start">
-                      <span className="text-growth-green text-lg font-bold flex-shrink-0 mt-0.5">✓</span>
-                      <span>
-                        <strong className="text-white">Partner Estratégico Real:</strong> Formamos parte de su mesa directiva de toma de decisiones y ejecutamos los cambios junto a su equipo contable interno.
-                      </span>
-                    </li>
-                    <li className="flex gap-3 items-start">
-                      <span className="text-growth-green text-lg font-bold flex-shrink-0 mt-0.5">✓</span>
-                      <span>
-                        <strong className="text-white">Tableros Bi Interactivos:</strong> Creamos y automatizamos un dashboard unificado en tiempo real para visualizar ingresos, margen de contribución y EBITDA de forma interactiva.
-                      </span>
-                    </li>
-                    <li className="flex gap-3 items-start">
-                      <span className="text-growth-green text-lg font-bold flex-shrink-0 mt-0.5">✓</span>
-                      <span>
-                        <strong className="text-white">Estructuración Integrada:</strong> Alineamos el presupuesto publicitario con los unit economics del negocio para garantizar un ROMI óptimo.
-                      </span>
-                    </li>
-                  </ul>
+                  <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+                    <div className="w-8 h-8 rounded-full bg-growth-green/20 flex items-center justify-center text-growth-green">
+                      <Check className="w-4 h-4" />
+                    </div>
+                    <span className="text-xs font-semibold tracking-wider text-growth-green uppercase">El Modelo Specifinance de Élite</span>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-bold text-white">Tableros Interactivos y Control Diario</h4>
+                      <p className="text-[11px] text-white/70 leading-relaxed">Visualiza tu EBITDA, margen bruto y caja libre operativo en tiempo real. Decisiones ágiles respaldadas 100% por números vivos.</p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-bold text-white">Sinergias entre Margen y Presupuesto de Pauta</h4>
+                      <p className="text-[11px] text-white/70 leading-relaxed">Alineamos tus campañas publicitarias digitales para vender solo las unidades de negocio que generan mayor rentabilidad neta.</p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-bold text-white">Dirección Financiera Estratégica (CFO Externo)</h4>
+                      <p className="text-[11px] text-white/70 leading-relaxed">Accede a la mesa de control de un director financiero calificado para planificar impuestos, deudas y liquidez a tu escala.</p>
+                    </div>
+                  </div>
                 </div>
 
               </div>
@@ -744,320 +728,181 @@ export default function App() {
               {/* ACTIVE TAB CONTENT CONTAINER */}
               <div className="bg-surface-gray rounded-2xl border border-border-subtle p-6 md:p-10 transition-all duration-500 hover:shadow-md">
                 
-                {/* 1. FINANCIAL PILLAR */}
+                {/* 1. FINANCIAL PILLAR - Synthesized & Visual */}
                 {activePillarTab === 'financial' && (
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
                     
-                    {/* Left: Metadata & Leadership */}
-                    <div className="lg:col-span-6 space-y-6">
-                      <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center p-5 bg-white rounded-xl border border-border-subtle">
-                        <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-extrabold text-2xl flex-shrink-0 border-2 border-indigo-200 shadow-sm font-sans">
+                    {/* Left: Leadership & Core Scope */}
+                    <div className="lg:col-span-5 space-y-6">
+                      <div className="flex gap-4 items-center p-4 bg-white rounded-xl border border-border-subtle shadow-sm">
+                        <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-lg border border-indigo-200">
                           JS
                         </div>
                         <div>
-                          <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold font-sans tracking-wide">
-                            DIRECTOR PROFESIONAL DE ÁREA
+                          <span className="text-[9px] bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold uppercase">
+                            CFO de la Firma
                           </span>
-                          <h4 className="font-heading font-extrabold text-lg text-deep-navy" id="financial-director-name">
-                            Dr. Juan Suarez, Director Financiero
+                          <h4 className="font-heading font-extrabold text-base text-deep-navy">
+                            Juan Suarez
                           </h4>
-                          <p className="text-charcoal-text text-xs" id="financial-director-bio">
-                            Director con dirección en portafolios, análisis financiero y cartera. Asociado especializado en el crecimiento estratégico y equilibrio financiero en PyMEs nacionales e internacionales.
-                          </p>
                         </div>
                       </div>
 
-                      <div className="space-y-4">
-                        <h4 className="font-heading font-extrabold text-indigo-900 text-sm tracking-wide uppercase">
-                          Enfoque Técnico y Entregables del Área:
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-indigo-900 uppercase tracking-wider">
+                          Especialidades y Control de Caja:
                         </h4>
+                        <p className="text-charcoal-text text-xs leading-relaxed">
+                          Blindamos la liquidez y controlamos egresos ocultos para que el negocio siga operando con márgenes sólidos y saludables.
+                        </p>
                         
-                        <p className="text-charcoal-text text-sm leading-relaxed">
-                          Este eje se enfoca en blindar la viabilidad y rentabilidad a largo plazo. No se trata simplemente de contabilizar transacciones; el Director Financiero diseña la estructura presupuestaria que evita fugas de capital y optimiza el retorno del negocio.
-                        </p>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                          <div className="bg-white p-3 rounded border border-border-subtle">
-                            <span className="text-xs font-bold text-deep-navy block">📊 EBITDA Ajustado</span>
-                            <span className="text-[11px] text-charcoal-text italic">Optimización de costos fijos y diseño del margen bruto real.</span>
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          <div className="bg-white p-2.5 rounded border border-border-subtle text-left">
+                            <span className="text-[11px] font-bold text-deep-navy block">📊 EBITDA Sólido</span>
+                            <span className="text-[9.5px] text-slate-500">Recortes inmediatos de ineficiencias de planta.</span>
                           </div>
-                          <div className="bg-white p-3 rounded border border-border-subtle">
-                            <span className="text-xs font-bold text-deep-navy block">💸 Flujo de Caja Libre</span>
-                            <span className="text-[11px] text-charcoal-text italic">Proyecciones de liquidez y control semanal de tesorería.</span>
-                          </div>
-                          <div className="bg-white p-3 rounded border border-border-subtle">
-                            <span className="text-xs font-bold text-deep-navy block">🎯 Punto de Equilibrio</span>
-                            <span className="text-[11px] text-charcoal-text italic">Cálculo dinámico del nivel de ventas mínimo de supervivencia.</span>
-                          </div>
-                          <div className="bg-white p-3 rounded border border-border-subtle">
-                            <span className="text-xs font-bold text-deep-navy block">📈 Múltiplos Sectoriales</span>
-                            <span className="text-[11px] text-charcoal-text italic">Valoración constante orientada a levantar capital o estructurar deuda.</span>
+                          <div className="bg-white p-2.5 rounded border border-border-subtle text-left">
+                            <span className="text-[11px] font-bold text-deep-navy block">💸 Caja Semanal</span>
+                            <span className="text-[9.5px] text-slate-500">Control absoluto de flujos de efectivo futuros.</span>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Right: Interactive simulation widget */}
-                    <div className="lg:col-span-6 bg-white p-6 md:p-8 rounded-xl border border-border-subtle shadow-md space-y-6">
-                      <div>
-                        <span className="inline-block px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-mono tracking-wider rounded font-bold uppercase mb-1">
-                          Mini-Simulador Financiero
+                    {/* Right: Dual Card Visual comparison Before / After */}
+                    <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Antes: Red alert cards */}
+                      <div className="bg-red-50/50 border border-red-100 p-5 rounded-xl space-y-3">
+                        <span className="inline-block px-2 py-0.5 bg-red-1050/10 text-red-700 text-[9px] font-bold uppercase rounded">
+                          Gestión Tradicional
                         </span>
-                        <h3 className="font-heading font-extrabold text-xl text-deep-navy">
-                          Impacto en EBITDA y Liquidez
-                        </h3>
-                        <p className="text-charcoal-text text-xs">
-                          Mueva los rangos para evaluar cómo una mejora quirúrgica de Specifinance (estimada conservadoramente en 3.8%) libera capital dormido.
-                        </p>
+                        <ul className="space-y-2 text-xs text-slate-700 leading-relaxed">
+                          <li className="flex gap-1.5 items-start">
+                            <span className="text-red-500 font-extrabold shrink-0">✕</span>
+                            <span>Solo ves los resultados a mes vencido cuando el problema ya ocurrió.</span>
+                          </li>
+                          <li className="flex gap-1.5 items-start">
+                            <span className="text-red-500 font-extrabold shrink-0">✕</span>
+                            <span>Contabilidad fiscal básica sin visión estratégica comercial.</span>
+                          </li>
+                          <li className="flex gap-1.5 items-start">
+                            <span className="text-red-500 font-extrabold shrink-0">✕</span>
+                            <span>Incertidumbre en caja y dependencia constante de préstamos.</span>
+                          </li>
+                        </ul>
                       </div>
 
-                      <hr className="border-slate-100" />
-
-                      {/* Slider: Monthly sales */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-xs">
-                          <span className="font-semibold text-charcoal-text uppercase">Venta Mensual de la Compañía</span>
-                          <span className="font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">${pillarFinRevenue.toLocaleString()} USD</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="15000"
-                          max="250000"
-                          step="5000"
-                          value={pillarFinRevenue}
-                          onChange={(e) => setPillarFinRevenue(Number(e.target.value))}
-                          className="w-full accent-deep-navy"
-                        />
-                        <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                          <span>$15,000 USD / mes</span>
-                          <span>$250,000 USD / mes</span>
-                        </div>
+                      {/* Después: Specifinance card */}
+                      <div className="bg-indigo-50/55 border border-indigo-100 p-5 rounded-xl space-y-3">
+                        <span className="inline-block px-2 py-0.5 bg-indigo-600 text-white text-[9px] font-bold uppercase rounded shadow-sm">
+                          Con Specifinance
+                        </span>
+                        <ul className="space-y-2 text-xs text-deep-navy leading-relaxed">
+                          <li className="flex gap-1.5 items-start">
+                            <span className="text-growth-green font-extrabold shrink-0">✓</span>
+                            <span><strong>Dashboards Diarios:</strong> Decisiones instantáneas con datos en vivo.</span>
+                          </li>
+                          <li className="flex gap-1.5 items-start">
+                            <span className="text-growth-green font-extrabold shrink-0">✓</span>
+                            <span><strong>CFO de Élite:</strong> Gerencia activa continua sin salarios pesados de planta.</span>
+                          </li>
+                          <li className="flex gap-1.5 items-start">
+                            <span className="text-growth-green font-extrabold shrink-0">✓</span>
+                            <span><strong>Previsibilidad:</strong> Saber de antemano el flujo de caja a 30 y 90 días.</span>
+                          </li>
+                        </ul>
                       </div>
-
-                      {/* Slider: current EBITDA */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-xs">
-                          <span className="font-semibold text-charcoal-text uppercase">Margen EBITDA Actual</span>
-                          <span className="font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">{pillarFinEbitda}%</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="3"
-                          max="35"
-                          step="1"
-                          value={pillarFinEbitda}
-                          onChange={(e) => setPillarFinEbitda(Number(e.target.value))}
-                          className="w-full accent-deep-navy"
-                        />
-                        <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                          <span>3% (Bajo)</span>
-                          <span>35% (Élite)</span>
-                        </div>
-                      </div>
-
-                      <div className="p-4 bg-slate-50 border border-slate-100 rounded-lg space-y-3">
-                        <div className="grid grid-cols-2 gap-4 text-center divide-x divide-slate-200">
-                          <div>
-                            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">EBITDA Anual Actual</span>
-                            <span className="text-sm font-semibold text-slate-600 font-mono">
-                              ${Math.round((pillarFinRevenue * 12) * (pillarFinEbitda / 100)).toLocaleString()} USD
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] font-semibold text-indigo-600 uppercase tracking-widest block">EBITDA Optimizado (+3.8%)</span>
-                            <span className="text-sm font-bold text-indigo-800 font-mono">
-                              ${Math.round((pillarFinRevenue * 12) * ((pillarFinEbitda + 3.8) / 100)).toLocaleString()} USD
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="border-t border-slate-200 pt-3 flex items-center justify-between">
-                          <span className="text-xs text-charcoal-text font-semibold">Caja Anual Unlocked:</span>
-                          <span className="text-base font-bold text-growth-green font-mono">
-                            +${Math.round((pillarFinRevenue * 12) * 0.038).toLocaleString()} USD / año
-                          </span>
-                        </div>
-                      </div>
-
-                      <p className="text-[10px] text-slate-400 leading-relaxed text-center italic">
-                        Esta caja liberada representa capital libre directo reintegrado al presupuesto sin requerir crédito bancario o diluciones de equity.
-                      </p>
-
                     </div>
+
                   </div>
                 )}
 
-                {/* 2. MARKETING & GROWTH PILLAR */}
+                {/* 2. MARKETING & GROWTH PILLAR - Synthesized & Visual */}
                 {activePillarTab === 'marketing' && (
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
                     
-                    {/* Left: Metadata & Leadership */}
-                    <div className="lg:col-span-6 space-y-6">
-                      <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center p-5 bg-white rounded-xl border border-border-subtle">
-                        <div className="w-16 h-16 rounded-full bg-pink-100 flex items-center justify-center text-pink-700 font-extrabold text-2xl flex-shrink-0 border-2 border-pink-200 shadow-sm font-sans">
+                    {/* Left: Leadership & Core Scope */}
+                    <div className="lg:col-span-5 space-y-6">
+                      <div className="flex gap-4 items-center p-4 bg-white rounded-xl border border-border-subtle shadow-sm">
+                        <div className="w-12 h-12 rounded-full bg-pink-1050/10 flex items-center justify-center text-pink-600 font-bold text-lg border border-pink-200">
                           SG
                         </div>
                         <div>
-                          <span className="text-[10px] bg-pink-50 text-pink-700 px-2 py-0.5 rounded font-bold font-sans tracking-wide">
-                            DIRECTOR PROFESIONAL DE ÁREA
+                          <span className="text-[9px] bg-pink-50 border border-pink-100 text-pink-700 px-2 py-0.5 rounded font-bold uppercase">
+                            Growth Director
                           </span>
-                          <h4 className="font-heading font-extrabold text-lg text-deep-navy" id="marketing-director-name">
-                            Dr. Samuel Galeano, Director de Marketing
+                          <h4 className="font-heading font-extrabold text-base text-deep-navy">
+                            Samuel Galeano
                           </h4>
-                          <p className="text-charcoal-text text-xs leading-relaxed" id="marketing-director-bio">
-                            Especialista en marketing cuantitativo y arquitecto de automatizaciones digitales a escala. Experto en el diseño y despliegue de estrategias de crecimiento de marca, transformando datos financieros e indicadores de negocio en sistemas automatizados de adquisición con alta rentabilidad de pauta.
-                          </p>
                         </div>
                       </div>
 
-                      <div className="space-y-4">
-                        <h4 className="font-heading font-extrabold text-indigo-900 text-sm tracking-wide uppercase">
-                          Enfoque y Enfoques de Intervención del Sector:
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-pink-900 uppercase tracking-wider">
+                          Nuestra Maquinaria de Ventas:
                         </h4>
+                        <p className="text-charcoal-text text-xs leading-relaxed">
+                          Invertimos capital en pauta digital solo cuando el CFO ha comprobado que el margen comercial de cada producto es altamente rentable para tu PyME.
+                        </p>
                         
-                        <p className="text-charcoal-text text-sm leading-relaxed">
-                          La inversión publicitaria es un generador de retornos, no un gasto. El área de Marketing estructura la táctica de adquisición basándose en la rentabilidad real de los productos, alineando la imagen de la marca para cobrar tarifas premium e incrementando la tracción comercial sistemáticamente.
-                        </p>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                          <div className="bg-white p-3 rounded border border-border-subtle">
-                            <span className="text-xs font-bold text-deep-navy block">🎨 Identidad y Rebranding Digital</span>
-                            <span className="text-[11px] text-charcoal-text italic">Mejora sustancial en la percepción del valor para justificar mejores precios.</span>
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          <div className="bg-white p-2.5 rounded border border-border-subtle text-left">
+                            <span className="text-[11px] font-bold text-deep-navy block">🎨 Identidad Premium</span>
+                            <span className="text-[9.5px] text-slate-500">Posicionamiento de alto ticket B2B.</span>
                           </div>
-                          <div className="bg-white p-3 rounded border border-border-subtle">
-                            <span className="text-xs font-bold text-deep-navy block">📣 Pauta y Aumento de Ventas</span>
-                            <span className="text-[11px] text-charcoal-text italic">Inyección omnicanal enfocada a la captación de leads listos para comprar.</span>
-                          </div>
-                          <div className="bg-white p-3 rounded border border-border-subtle">
-                            <span className="text-xs font-bold text-deep-navy block">💼 Estrategias LinkedIn B2B</span>
-                            <span className="text-[11px] text-charcoal-text italic">Posicionamiento directivo para cerrar contratos comerciales de alto ticket.</span>
-                          </div>
-                          <div className="bg-white p-3 rounded border border-border-subtle">
-                            <span className="text-xs font-bold text-deep-navy block">⚡ CAC / LTV Matrix</span>
-                            <span className="text-[11px] text-charcoal-text italic">Auditoría minuciosa de canales para invertir solo donde haya conversión ágil.</span>
+                          <div className="bg-white p-2.5 rounded border border-border-subtle text-left">
+                            <span className="text-[11px] font-bold text-deep-navy block">📈 Pauta por Datos</span>
+                            <span className="text-[9.5px] text-slate-500">Inyección enfocada al retorno total (ROMI).</span>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Right: Interactive simulation widget */}
-                    <div className="lg:col-span-6 bg-white p-6 md:p-8 rounded-xl border border-border-subtle shadow-md space-y-5">
-                      <div>
-                        <span className="inline-block px-2 py-0.5 bg-pink-50 text-pink-700 text-[10px] font-mono tracking-wider rounded font-bold uppercase mb-1">
-                          Simulador de Retorno de Pauta
+                    {/* Right: Dual Card Visual comparison Before / After */}
+                    <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Antes: Red alert cards */}
+                      <div className="bg-red-50/50 border border-red-100 p-5 rounded-xl space-y-3">
+                        <span className="inline-block px-2 py-0.5 bg-red-1050/10 text-red-700 text-[9px] font-bold uppercase rounded">
+                          Marketing Común
                         </span>
-                        <h3 className="font-heading font-extrabold text-xl text-deep-navy">
-                          Matriz CAC vs LTV y ROMI
-                        </h3>
-                        <p className="text-charcoal-text text-xs">
-                          Alimente las variables de su presupuesto y conversión para medir la salud de adquisición de clientes y proyectar resultados comerciales.
-                        </p>
+                        <ul className="space-y-2 text-xs text-slate-700 leading-relaxed">
+                          <li className="flex gap-1.5 items-start">
+                            <span className="text-red-500 font-extrabold shrink-0">✕</span>
+                            <span>Métricas vanidosas de likes o vistas que no traen dinero real al banco.</span>
+                          </li>
+                          <li className="flex gap-1.5 items-start">
+                            <span className="text-red-500 font-extrabold shrink-0">✕</span>
+                            <span>Invertir en pauta a ciegas sin calcular el coste de adquisición (CAC).</span>
+                          </li>
+                          <li className="flex gap-1.5 items-start">
+                            <span className="text-red-500 font-extrabold shrink-0">✕</span>
+                            <span>Poco valor percibido, lo que te obliga a bajar precios para competir.</span>
+                          </li>
+                        </ul>
                       </div>
 
-                      <hr className="border-slate-100" />
-
-                      <div className="grid grid-cols-2 gap-4">
-                        {/* Monthly Spend */}
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-charcoal-text uppercase block">Inversión Mensual (USD)</label>
-                          <input
-                            type="number"
-                            className="w-full p-2 border border-border-subtle rounded font-mono text-xs text-deep-navy"
-                            value={pillarMktSpend}
-                            onChange={(e) => setPillarMktSpend(Math.max(1, Number(e.target.value)))}
-                          />
-                        </div>
-                        {/* Cost Per Lead */}
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-charcoal-text uppercase block">Costo Por Lead (CPL)</label>
-                          <input
-                            type="number"
-                            className="w-full p-2 border border-border-subtle rounded font-mono text-xs text-deep-navy"
-                            value={pillarMktCpl}
-                            onChange={(e) => setPillarMktCpl(Math.max(0.1, Number(e.target.value)))}
-                          />
-                        </div>
-                        {/* Conversion Rate */}
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-charcoal-text uppercase block">Tasa de Conversión (%)</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            className="w-full p-2 border border-border-subtle rounded font-mono text-xs text-deep-navy"
-                            value={pillarMktConversion}
-                            onChange={(e) => setPillarMktConversion(Math.max(0.1, Number(e.target.value)))}
-                          />
-                        </div>
-                        {/* LTV */}
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-charcoal-text uppercase block">Valor Promedio de Venta (LTV)</label>
-                          <input
-                            type="number"
-                            className="w-full p-2 border border-border-subtle rounded font-mono text-xs text-deep-navy"
-                            value={pillarMktAov}
-                            onChange={(e) => setPillarMktAov(Math.max(1, Number(e.target.value)))}
-                          />
-                        </div>
+                      {/* Después: Specifinance card */}
+                      <div className="bg-pink-50/40 border border-pink-100 p-5 rounded-xl space-y-3">
+                        <span className="inline-block px-2 py-0.5 bg-pink-600 text-white text-[9px] font-bold uppercase rounded shadow-sm">
+                          Con Specifinance
+                        </span>
+                        <ul className="space-y-2 text-xs text-deep-navy leading-relaxed">
+                          <li className="flex gap-1.5 items-start">
+                            <span className="text-growth-green font-extrabold shrink-0">✓</span>
+                            <span><strong>Pauta Científica:</strong> Invertimos pauta sobre lo que realmente deja margen contable.</span>
+                          </li>
+                          <li className="flex gap-1.5 items-start">
+                            <span className="text-growth-green font-extrabold shrink-0">✓</span>
+                            <span><strong>Posicionamiento B2B:</strong> LinkedIn y branding de élite para ganar estatus corporativo.</span>
+                          </li>
+                          <li className="flex gap-1.5 items-start">
+                            <span className="text-growth-green font-extrabold shrink-0">✓</span>
+                            <span><strong>Métrica Única:</strong> Evaluamos el costo por lead calificado y el EBITDA final de ventas.</span>
+                          </li>
+                        </ul>
                       </div>
-
-                      {/* Calculations output */}
-                      {(() => {
-                        const leads = Math.round(pillarMktSpend / pillarMktCpl);
-                        const clients = (pillarMktSpend / pillarMktCpl) * (pillarMktConversion / 100);
-                        const cac = clients > 0 ? (pillarMktSpend / clients) : 0;
-                        const ltvCacRatio = cac > 0 ? (pillarMktAov / cac) : 0;
-                        const pipeGenerated = clients * pillarMktAov;
-                        const romi = pillarMktSpend > 0 ? ((pipeGenerated - pillarMktSpend) / pillarMktSpend) * 100 : 0;
-
-                        let ratioLabel = "Peligroso ⚠️";
-                        let ratioBg = "bg-red-50 text-red-700 border-red-100";
-                        if (ltvCacRatio >= 3 && ltvCacRatio < 5) {
-                          ratioLabel = "Saludable ✅";
-                          ratioBg = "bg-green-50 text-green-700 border-green-100";
-                        } else if (ltvCacRatio >= 5) {
-                          ratioLabel = "Excelente Rango Élite 💎";
-                          ratioBg = "bg-indigo-50 text-indigo-700 border-indigo-100";
-                        }
-
-                        return (
-                          <div className="space-y-3 pt-2">
-                            <div className="grid grid-cols-3 gap-2 text-center">
-                              <div className="bg-slate-50 p-2.5 rounded border border-slate-100">
-                                <span className="text-[9px] text-slate-400 uppercase font-bold block">Leads Generados</span>
-                                <span className="text-xs font-semibold text-deep-navy font-mono">{leads}</span>
-                              </div>
-                              <div className="bg-slate-50 p-2.5 rounded border border-slate-100">
-                                <span className="text-[9px] text-slate-400 uppercase font-bold block">Clientes Nuevos</span>
-                                <span className="text-xs font-semibold text-deep-navy font-mono">{clients.toFixed(1)}</span>
-                              </div>
-                              <div className="bg-slate-50 p-2.5 rounded border border-slate-100">
-                                <span className="text-[9px] text-slate-400 uppercase font-bold block">CAC Proyectado</span>
-                                <span className="text-xs font-semibold text-deep-navy font-mono">${Math.round(cac).toLocaleString()} USD</span>
-                              </div>
-                            </div>
-
-                            <div className={`p-3.5 rounded-lg border text-xs flex justify-between items-center ${ratioBg}`}>
-                              <div>
-                                <span className="font-bold block uppercase text-[10px]">Ratio LTV / CAC:</span>
-                                <p className="text-[11px] mt-0.5">La relación de valor de vida vs. costo de adquisición es de {ltvCacRatio.toFixed(1)}x.</p>
-                              </div>
-                              <span className="font-bold text-xs uppercase px-2 py-1 rounded bg-white/50">{ratioLabel}</span>
-                            </div>
-
-                            <div className="p-3 bg-deep-navy text-white rounded flex justify-between items-center">
-                              <span className="text-xs font-semibold">Valor Pipeline / Ventas Totales:</span>
-                              <span className="text-sm font-bold text-growth-green font-mono">${Math.round(pipeGenerated).toLocaleString()} USD</span>
-                            </div>
-
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-charcoal-text font-semibold">ROMI Proyectado de Inversión:</span>
-                              <span className="text-indigo-600 font-extrabold font-mono">{romi.toFixed(0)}%</span>
-                            </div>
-                          </div>
-                        );
-                      })()}
-
                     </div>
+
                   </div>
                 )}
 
@@ -1153,42 +998,45 @@ export default function App() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
                 {/* Unit 1 */}
-                <div className="bg-white p-8 rounded-xl border border-border-subtle flex flex-col justify-between hover:shadow-lg transition-all">
+                <div className="bg-white p-8 rounded-xl border border-border-subtle flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-indigo-100">
                   <div className="space-y-4">
-                    <span className="inline-block px-2.5 py-1 text-[9px] bg-deep-navy text-white rounded font-mono font-bold tracking-widest uppercase">
+                    <span className="inline-block px-2.5 py-1 text-[9px] bg-indigo-600 text-white rounded font-mono font-bold tracking-widest uppercase shadow-sm">
                       MÁS SOLICITADO
                     </span>
                     <h3 className="font-heading font-bold text-xl text-deep-navy">
                       Full Growth Partner
                     </h3>
-                    <p className="text-charcoal-text text-xs leading-relaxed">
-                      Estrategia general en la que tomamos la dirección financiera y el alineamiento de marketing publicitario bajo una única consola analítica de datos comerciales.
+                    <p className="text-charcoal-text text-xs leading-relaxed pb-2">
+                      Actuamos como el aliado estratégico de crecimiento de tu empresa, integrando dirección financiera, análisis de datos y estrategia comercial para que cada inversión, campaña y decisión de expansión contribuya a resultados medibles, rentables y sostenibles.
                     </p>
-                    <ul className="space-y-2 text-xs text-charcoal-text pt-2">
+                    <ul className="space-y-2 text-xs text-charcoal-text">
                       <li className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> CFO + Asesor Comercial semanal
+                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> CFO Externo y Growth Partner en un solo equipo.
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Optimización integrada CAC / LTV
+                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Estrategia financiera, comercial y de marketing alineada.
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Reportes de rentabilidad semanales
+                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Dashboards y seguimiento de KPIs clave.
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Soporte para crecimiento, inversión y expansión.
                       </li>
                     </ul>
                   </div>
+
                   <div className="pt-8">
-                    <a 
-                      href="#cotizador" 
-                      onClick={() => setServiceOfInterest('full-growth')}
-                      className="w-full inline-block text-center py-2.5 border border-deep-navy text-deep-navy hover:bg-deep-navy hover:text-white transition-all text-xs font-semibold uppercase tracking-wider rounded"
+                    <button 
+                      onClick={() => setActiveServiceModal('full-partner')}
+                      className="w-full text-center py-2.5 bg-deep-navy text-white hover:bg-indigo-900 shadow-sm transition-all text-xs font-semibold uppercase tracking-wider rounded"
                     >
-                      Saber más y Cotizar
-                    </a>
+                      Saber más e Iniciar Diagnóstico
+                    </button>
                   </div>
                 </div>
 
                 {/* Unit 2 */}
-                <div className="bg-white p-8 rounded-xl border border-border-subtle flex flex-col justify-between hover:shadow-lg transition-all">
+                <div className="bg-white p-8 rounded-xl border border-border-subtle flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-indigo-100">
                   <div className="space-y-4">
                     <span className="inline-block px-2.5 py-1 text-[9px] bg-slate-100 text-deep-navy rounded font-mono font-bold tracking-widest uppercase">
                       DIRECCIÓN ESTRUCTURAL
@@ -1196,34 +1044,37 @@ export default function App() {
                     <h3 className="font-heading font-bold text-xl text-deep-navy">
                       CFO as a Service
                     </h3>
-                    <p className="text-charcoal-text text-xs leading-relaxed">
-                      Dirección y gerencia financiera externa para PyMEs. Control exhaustivo de caja, planeación estratégica de impuestos locales, y re-estructuración crediticia.
+                    <p className="text-charcoal-text text-xs leading-relaxed pb-2">
+                      Actuamos como el CFO externo de tu empresa, proporcionando planeación financiera, proyecciones estratégicas y acompañamiento continuo para mejorar la rentabilidad, optimizar el flujo de caja y respaldar decisiones de crecimiento con información confiable.
                     </p>
-                    <ul className="space-y-2 text-xs text-charcoal-text pt-2">
+                    <ul className="space-y-2 text-xs text-charcoal-text">
                       <li className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Control presupuestal mensual
+                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Planeación financiera estratégica.
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Auditoría de tesorería y balances
+                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Proyecciones y modelación de escenarios.
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Planeación tributaria corporativa
+                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Control de flujo de caja y liquidez.
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Análisis de rentabilidad y desempeño.
                       </li>
                     </ul>
                   </div>
+
                   <div className="pt-8">
-                    <a 
-                      href="#cotizador" 
-                      onClick={() => setServiceOfInterest('cfo-service')}
-                      className="w-full inline-block text-center py-2.5 border border-deep-navy text-deep-navy hover:bg-deep-navy hover:text-white transition-all text-xs font-semibold uppercase tracking-wider rounded"
+                    <button 
+                      onClick={() => setActiveServiceModal('cfo-service')}
+                      className="w-full text-center py-2.5 bg-slate-50 border border-border-subtle text-deep-navy hover:bg-slate-100 hover:border-slate-300 shadow-sm transition-all text-xs font-semibold uppercase tracking-wider rounded"
                     >
-                      Saber más y Cotizar
-                    </a>
+                      Saber más e Iniciar Diagnóstico
+                    </button>
                   </div>
                 </div>
 
                 {/* Unit 3 */}
-                <div className="bg-white p-8 rounded-xl border border-border-subtle flex flex-col justify-between hover:shadow-lg transition-all">
+                <div className="bg-white p-8 rounded-xl border border-border-subtle flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-indigo-100">
                   <div className="space-y-4">
                     <span className="inline-block px-2.5 py-1 text-[9px] bg-slate-100 text-deep-navy rounded font-mono font-bold tracking-widest uppercase">
                       DATOS Y OPTIMIZACIÓN
@@ -1231,53 +1082,35 @@ export default function App() {
                     <h3 className="font-heading font-bold text-xl text-deep-navy">
                       Data-Driven Growth
                     </h3>
-                    <p className="text-charcoal-text text-xs leading-relaxed">
-                      Modelamos escenarios complejos de escalamiento internacional, analizando a fondo los unit economics del negocio por cohortes de retención de clientes.
+                    <p className="text-charcoal-text text-xs leading-relaxed pb-2">
+                      Diseñamos estrategias de crecimiento respaldadas por datos, analizando el desempeño comercial y de marketing para identificar oportunidades de optimización, adquisición de clientes y mejora del retorno sobre la inversión en publicidad.
                     </p>
-                    <ul className="space-y-2 text-xs text-charcoal-text pt-2">
+                    <ul className="space-y-2 text-xs text-charcoal-text">
                       <li className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Análisis profundo de cohortes
+                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Planeación estratégica de marketing y crecimiento.
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Proyecciones con simulación Monte Carlo
+                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Optimización de inversión publicitaria y demanda.
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Estructura analítica de incentivos
+                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Análisis de datos comerciales y de clientes.
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-growth-green flex-shrink-0" /> Medición de indicadores de retorno de inversión.
                       </li>
                     </ul>
                   </div>
+
                   <div className="pt-8">
-                    <a 
-                      href="#cotizador" 
-                      onClick={() => setServiceOfInterest('data-driven')}
-                      className="w-full inline-block text-center py-2.5 border border-deep-navy text-deep-navy hover:bg-deep-navy hover:text-white transition-all text-xs font-semibold uppercase tracking-wider rounded"
+                    <button 
+                      onClick={() => setActiveServiceModal('data-driven')}
+                      className="w-full text-center py-2.5 bg-slate-50 border border-border-subtle text-deep-navy hover:bg-slate-100 hover:border-slate-300 shadow-sm transition-all text-xs font-semibold uppercase tracking-wider rounded"
                     >
-                      Saber más y Cotizar
-                    </a>
+                      Saber más e Iniciar Diagnóstico
+                    </button>
                   </div>
                 </div>
 
-              </div>
-            </div>
-          </section>
-
-          {/* Interactive Cotizador section */}
-          <section id="cotizador" className="py-24 bg-white border-b border-border-subtle">
-            <div className="max-w-7xl mx-auto px-6 md:px-12 space-y-12">
-              <div className="text-center max-w-xl mx-auto space-y-3">
-                <span className="text-[10px] font-semibold text-deep-navy bg-slate-100 px-3 py-1 rounded font-mono tracking-widest uppercase">
-                  SIMULACIÓN DE CONSULTORÍA
-                </span>
-                <h2 className="font-heading font-extrabold text-3xl text-deep-navy">
-                  Calcule el Costo e Impacto de su Servicio
-                </h2>
-                <p className="text-charcoal-text text-xs">
-                  Modifique las variables en el cotizador interactivo. Al finalizar, haga clic en "Aplicar Cotización" para pre-cargar los datos en su diagnóstico corporativo formal.
-                </p>
-              </div>
-
-              <div className="max-w-5xl mx-auto">
-                <Cotizador onQuoteApplied={handleQuoteApplied} />
               </div>
             </div>
           </section>
@@ -1300,11 +1133,11 @@ export default function App() {
                 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 relative z-10">
                   
-                  <div className="text-center space-y-4">
-                    <span className="w-12 h-12 rounded-full border-2 border-indigo-650 bg-white text-indigo-700 font-bold text-center flex items-center justify-center mx-auto text-sm font-mono shadow-sm">
+                  <div className="text-center space-y-4 group">
+                    <div className="w-16 h-16 rounded-full bg-indigo-50 border-2 border-indigo-200 text-indigo-700 font-bold text-center flex items-center justify-center mx-auto text-lg font-mono shadow-[0_0_15px_rgba(79,70,229,0.1)] group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-all duration-300">
                       01
-                    </span>
-                    <h4 className="font-heading font-extrabold text-base text-deep-navy tracking-tight">
+                    </div>
+                    <h4 className="font-heading font-extrabold text-base text-deep-navy tracking-tight group-hover:text-indigo-700 transition-colors">
                       Fase 1: Diagnóstico Estratégico
                     </h4>
                     <p className="text-charcoal-text text-xs leading-relaxed px-2">
@@ -1312,11 +1145,11 @@ export default function App() {
                     </p>
                   </div>
 
-                  <div className="text-center space-y-4">
-                    <span className="w-12 h-12 rounded-full border-2 border-indigo-650 bg-white text-indigo-700 font-bold text-center flex items-center justify-center mx-auto text-sm font-mono shadow-sm">
+                  <div className="text-center space-y-4 group">
+                    <div className="w-16 h-16 rounded-full bg-indigo-50 border-2 border-indigo-200 text-indigo-700 font-bold text-center flex items-center justify-center mx-auto text-lg font-mono shadow-[0_0_15px_rgba(79,70,229,0.1)] group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-all duration-300">
                       02
-                    </span>
-                    <h4 className="font-heading font-extrabold text-base text-deep-navy tracking-tight">
+                    </div>
+                    <h4 className="font-heading font-extrabold text-base text-deep-navy tracking-tight group-hover:text-indigo-700 transition-colors">
                       Fase 2: Dirección Estructurada
                     </h4>
                     <p className="text-charcoal-text text-xs leading-relaxed px-2">
@@ -1324,11 +1157,11 @@ export default function App() {
                     </p>
                   </div>
 
-                  <div className="text-center space-y-4">
-                    <span className="w-12 h-12 rounded-full border-2 border-indigo-650 bg-white text-indigo-700 font-bold text-center flex items-center justify-center mx-auto text-sm font-mono shadow-sm">
+                  <div className="text-center space-y-4 group">
+                    <div className="w-16 h-16 rounded-full bg-indigo-50 border-2 border-indigo-200 text-indigo-700 font-bold text-center flex items-center justify-center mx-auto text-lg font-mono shadow-[0_0_15px_rgba(79,70,229,0.1)] group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-all duration-300">
                       03
-                    </span>
-                    <h4 className="font-heading font-extrabold text-base text-deep-navy tracking-tight">
+                    </div>
+                    <h4 className="font-heading font-extrabold text-base text-deep-navy tracking-tight group-hover:text-indigo-700 transition-colors">
                       Fase 3: Optimización y Ejecución
                     </h4>
                     <p className="text-charcoal-text text-xs leading-relaxed px-2">
@@ -1336,11 +1169,11 @@ export default function App() {
                     </p>
                   </div>
 
-                  <div className="text-center space-y-4">
-                    <span className="w-12 h-12 rounded-full border-2 border-indigo-650 bg-white text-indigo-700 font-bold text-center flex items-center justify-center mx-auto text-sm font-mono shadow-sm">
+                  <div className="text-center space-y-4 group">
+                    <div className="w-16 h-16 rounded-full bg-indigo-50 border-2 border-indigo-200 text-indigo-700 font-bold text-center flex items-center justify-center mx-auto text-lg font-mono shadow-[0_0_15px_rgba(79,70,229,0.1)] group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-all duration-300">
                       04
-                    </span>
-                    <h4 className="font-heading font-extrabold text-base text-deep-navy tracking-tight">
+                    </div>
+                    <h4 className="font-heading font-extrabold text-base text-deep-navy tracking-tight group-hover:text-indigo-700 transition-colors">
                       Fase 4: Acompañamiento Continuo
                     </h4>
                     <p className="text-charcoal-text text-xs leading-relaxed px-2">
@@ -1393,9 +1226,9 @@ export default function App() {
                       </span>
                     </div>
                     <div className="flex justify-between items-center border-b border-slate-50 pb-2">
-                      <span className="text-charcoal-text">Margen de Contribución por Categoría</span>
+                      <span className="text-charcoal-text">Planeación Financiera</span>
                       <span className="text-growth-green font-semibold flex items-center gap-1 font-mono">
-                        ↑ Elevado
+                        ↑ Estructurada
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -1441,21 +1274,21 @@ export default function App() {
                   </h4>
                   <div className="space-y-4 text-xs">
                     <div className="flex justify-between items-center border-b border-slate-50 pb-2">
-                      <span className="text-charcoal-text">ROMI de Publicidad</span>
+                      <span className="text-charcoal-text">Rentabilidad Empresarial</span>
                       <span className="text-growth-green font-semibold flex items-center gap-1 font-mono">
-                        ↑ Auditado
+                        ↑ Optimizada
                       </span>
                     </div>
                     <div className="flex justify-between items-center border-b border-slate-50 pb-2">
-                      <span className="text-charcoal-text">CAGR (Tasa de Crecimiento Anual)</span>
+                      <span className="text-charcoal-text">Capacidad de Crecimiento</span>
                       <span className="text-growth-green font-semibold flex items-center gap-1 font-mono">
-                        ↑ Consolidado
+                        ↑ Escalada
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-charcoal-text">Múltiplo de Valoración de Empresa</span>
+                      <span className="text-charcoal-text">Valor Empresarial</span>
                       <span className="text-growth-green font-semibold flex items-center gap-1 font-mono">
-                        ↑ Máximizado
+                        ↑ Potenciado
                       </span>
                     </div>
                   </div>
@@ -1623,6 +1456,9 @@ export default function App() {
               </div>
             </div>
           </section>
+
+          {/* Dedicated practical solutions for small/medium enterprises (PyMEs) */}
+          <SmeSolutions onSelectSmeNeed={handleSelectSmeNeed} />
 
           {/* "Who is Specifinance for" with professional image */}
           <section className="py-24 bg-white">
@@ -2046,6 +1882,17 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Service Detail Modal */}
+      <ServiceModal 
+        isOpen={activeServiceModal !== null}
+        serviceId={activeServiceModal}
+        onClose={() => setActiveServiceModal(null)}
+        onSelectService={(serviceName, serviceId) => {
+          setFormService(serviceName);
+          setServiceOfInterest(serviceId);
+        }}
+      />
 
     </div>
   );
