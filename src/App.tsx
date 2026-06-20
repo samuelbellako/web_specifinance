@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Lead, Booking, OutgoingEmailLog, QuoteCalculated } from './types';
 import { INITIAL_LEADS, INITIAL_BOOKINGS } from './data';
-import Scheduler from './components/Scheduler';
 import AdminDashboard from './components/AdminDashboard';
 import SmeSolutions from './components/SmeSolutions';
 import ServiceModal from './components/ServiceModal';
@@ -57,6 +57,19 @@ export default function App() {
 
   // States for the 2-Pillar Interlocking Corporate Hub
   const [activePillarTab, setActivePillarTab] = useState<'financial' | 'marketing' | 'synergy'>('financial');
+
+  const fadeInUp = {
+    initial: { opacity: 0, y: 30 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true, margin: "-50px" },
+    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] }
+  };
+  const staggerContainer = {
+    initial: { opacity: 0 },
+    whileInView: { opacity: 1 },
+    viewport: { once: true, margin: "-50px" },
+    transition: { staggerChildren: 0.2, delayChildren: 0.1 }
+  };
 
   // Handles updating lead states inside CRM
   const handleUpdateLeadStatus = (leadId: string, newStatus: Lead['status']) => {
@@ -124,6 +137,9 @@ export default function App() {
     handleAddLead(newLead);
     setDiagnosticLeadCreated(newLead);
     setFormSubmitted(true);
+    
+    // Redirect to Calendly for appointment
+    window.open('https://calendly.com/specifinance/consultoria', '_blank');
   };
 
   // Handle Admin Auth Login
@@ -175,9 +191,6 @@ export default function App() {
               </a>
               <a href="#metodologia" className="text-xs font-semibold uppercase tracking-wider text-charcoal-text hover:text-deep-navy transition-colors">
                 Metodología
-              </a>
-              <a href="#resultados" className="text-xs font-semibold uppercase tracking-wider text-charcoal-text hover:text-deep-navy transition-colors">
-                Resultados
               </a>
               <a href="#contacto" className="text-xs font-semibold uppercase tracking-wider text-charcoal-text hover:text-deep-navy transition-colors">
                 Contacto
@@ -233,9 +246,6 @@ export default function App() {
               </a>
               <a href="#metodologia" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-charcoal-text block py-1.5 border-b border-slate-100">
                 Metodología
-              </a>
-              <a href="#resultados" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-charcoal-text block py-1.5 border-b border-slate-100">
-                Resultados
               </a>
               <a href="#contacto" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-charcoal-text block py-1.5 border-b border-slate-100">
                 Contacto
@@ -384,42 +394,47 @@ export default function App() {
         <div>
           {/* Hero Section */}
           <header id="inicio" className="relative overflow-hidden pt-12 pb-24 md:py-32">
-            <div className="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <motion.div 
+              variants={staggerContainer}
+              initial="initial"
+              whileInView="whileInView"
+              className="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center"
+            >
               
               <div className="space-y-6">
-                <span className="inline-flex py-1 px-3 bg-white/70 border border-border-subtle rounded text-deep-navy font-sans text-[11px] tracking-widest uppercase font-semibold">
+                <motion.span variants={fadeInUp} className="inline-flex py-1 px-3 bg-white/70 border border-border-subtle rounded text-deep-navy font-sans text-[11px] tracking-widest uppercase font-semibold">
                   📈 Consultoría Boutique de Estrategia
-                </span>
+                </motion.span>
                 
-                <h1 className="font-heading font-extrabold text-4xl md:text-5xl lg:text-6xl text-deep-navy leading-tight tracking-tight">
+                <motion.h1 variants={fadeInUp} className="font-heading font-extrabold text-4xl md:text-5xl lg:text-6xl text-deep-navy leading-tight tracking-tight">
                   Dirección financiera y crecimiento corporativo basados en datos.
-                </h1>
+                </motion.h1>
                 
-                <p className="text-charcoal-text text-base md:text-lg max-w-xl leading-relaxed">
+                <motion.p variants={fadeInUp} className="text-charcoal-text text-base md:text-lg max-w-xl leading-relaxed">
                   Actuamos como la dirección financiera externa de tu empresa, alineando las decisiones comerciales, financieras y de crecimiento para maximizar la rentabilidad y el impacto de cada inversión.
-                </p>
+                </motion.p>
 
-                <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 pt-4">
                   <a 
                     href="https://calendly.com/specifinance/consultoria" 
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-deep-navy text-white hover:bg-black text-center px-8 py-3.5 rounded font-heading font-medium text-sm transition-colors shadow-lg"
+                    className="bg-deep-navy text-white hover:bg-black hover:-translate-y-1 hover:shadow-xl text-center px-8 py-3.5 rounded font-heading font-medium text-sm transition-all duration-300 shadow-lg block"
                   >
                     Agenda una reunión gratuita para tu consultoría
                   </a>
                   <a 
                     href="#metodologia" 
-                    className="border border-deep-navy text-deep-navy hover:bg-deep-navy/5 text-center px-8 py-3.5 rounded font-heading font-medium text-sm transition-colors"
+                    className="border border-deep-navy text-deep-navy hover:bg-deep-navy hover:text-white text-center px-8 py-3.5 rounded font-heading font-medium text-sm transition-all duration-300 block"
                   >
                     Ver Metodología de Trabajo
                   </a>
-                </div>
+                </motion.div>
               </div>
 
               {/* Graphic dashboard preview */}
-              <div className="relative">
-                <div className="bg-white rounded-xl boutique-shadow border border-border-subtle p-3 overflow-hidden">
+              <motion.div variants={fadeInUp} className="relative">
+                <div className="bg-white rounded-xl boutique-shadow border border-border-subtle p-3 overflow-hidden transform hover:-translate-y-2 transition-transform duration-500 hover:shadow-2xl hover:border-indigo-200">
                   <img 
                     alt="Financial Dashboard" 
                     className="w-full h-auto rounded-lg shadow-sm" 
@@ -428,32 +443,44 @@ export default function App() {
                   />
                 </div>
                 {/* Floating Card */}
-                <div className="absolute -bottom-6 -left-6 bg-deep-navy text-white p-5 rounded-lg shadow-xl max-w-xs hidden md:block border border-white/10">
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9, x: -20, y: 20 }}
+                  whileInView={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+                  transition={{ delay: 0.5, duration: 0.6 }}
+                  viewport={{ once: true }}
+                  className="absolute -bottom-6 -left-6 bg-deep-navy text-white p-5 rounded-lg shadow-xl max-w-xs hidden md:block border border-white/10"
+                >
                   <p className="font-heading text-lg font-bold leading-snug">
                     Finanzas + Marketing + Datos = <span className="text-growth-green font-extrabold">Crecimiento rentable</span>
                   </p>
                   <p className="text-white/60 text-[11px] mt-1.5 font-mono">
                     Auditoría Boutique Real con Retorno de Inversión.
                   </p>
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
 
-            </div>
+            </motion.div>
           </header>
 
           {/* Core Corporate Dilemma Block */}
-          <section className="bg-surface-gray py-20 border-y border-border-subtle">
+          <motion.section 
+            initial="initial"
+            whileInView="whileInView"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={staggerContainer}
+            className="bg-surface-gray py-20 border-y border-border-subtle"
+          >
             <div className="max-w-7xl mx-auto px-6 md:px-12 space-y-12">
-              <div className="text-center max-w-3xl mx-auto space-y-4">
+              <motion.div variants={fadeInUp} className="text-center max-w-3xl mx-auto space-y-4">
                 <h2 className="font-heading font-extrabold text-2xl md:text-3xl lg:text-4xl text-deep-navy leading-tight">
                   Transformamos datos financieros y comerciales en estrategias de crecimiento medibles y rentables
                 </h2>
                 <div className="w-12 h-1 bg-muted-gold mx-auto rounded" />
-              </div>
+              </motion.div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 
-                <div className="bg-white p-6 rounded-lg border border-border-subtle space-y-3 shadow-sm hover:border-deep-navy transition-all">
+                <motion.div variants={fadeInUp} className="bg-white p-6 rounded-lg border border-border-subtle space-y-3 shadow-sm hover:border-deep-navy transition-all duration-300 transform hover:-translate-y-1">
                   <span className="w-10 h-10 rounded-full bg-slate-100 text-deep-navy flex items-center justify-center font-bold text-center">
                     01
                   </span>
@@ -463,9 +490,9 @@ export default function App() {
                   <p className="text-charcoal-text text-xs leading-relaxed">
                     Desconocimiento de la rentabilidad real por producto, cliente o unidad de negocio. No todo lo que factura deja dinero.
                   </p>
-                </div>
+                </motion.div>
 
-                <div className="bg-white p-6 rounded-lg border border-border-subtle space-y-3 shadow-sm hover:border-deep-navy transition-all">
+                <motion.div variants={fadeInUp} className="bg-white p-6 rounded-lg border border-border-subtle space-y-3 shadow-sm hover:border-deep-navy transition-all duration-300 transform hover:-translate-y-1">
                   <span className="w-10 h-10 rounded-full bg-slate-100 text-deep-navy flex items-center justify-center font-bold text-center">
                     02
                   </span>
@@ -475,9 +502,9 @@ export default function App() {
                   <p className="text-charcoal-text text-xs leading-relaxed">
                     Inversión publicitaria sin una medición clara del retorno sobre la inversión de marketing publicitario (ROMI) real.
                   </p>
-                </div>
+                </motion.div>
 
-                <div className="bg-white p-6 rounded-lg border border-border-subtle space-y-3 shadow-sm hover:border-deep-navy transition-all">
+                <motion.div variants={fadeInUp} className="bg-white p-6 rounded-lg border border-border-subtle space-y-3 shadow-sm hover:border-deep-navy transition-all duration-300 transform hover:-translate-y-1">
                   <span className="w-10 h-10 rounded-full bg-slate-100 text-deep-navy flex items-center justify-center font-bold text-center">
                     03
                   </span>
@@ -487,9 +514,9 @@ export default function App() {
                   <p className="text-charcoal-text text-xs leading-relaxed">
                     Fuga constante de capital en procesos ineficientes y costos operativos de personal o logística no identificados.
                   </p>
-                </div>
+                </motion.div>
 
-                <div className="bg-white p-6 rounded-lg border border-border-subtle space-y-3 shadow-sm hover:border-deep-navy transition-all">
+                <motion.div variants={fadeInUp} className="bg-white p-6 rounded-lg border border-border-subtle space-y-3 shadow-sm hover:border-deep-navy transition-all duration-300 transform hover:-translate-y-1">
                   <span className="w-10 h-10 rounded-full bg-slate-100 text-deep-navy flex items-center justify-center font-bold text-center">
                     04
                   </span>
@@ -499,18 +526,25 @@ export default function App() {
                   <p className="text-charcoal-text text-xs leading-relaxed">
                     Decisiones de contratación, inventario y expansión basadas en sensaciones o el "feeling" empresarial.
                   </p>
-                </div>
+                </motion.div>
 
               </div>
             </div>
-          </section>
+          </motion.section>
 
           {/* Value Connection Block - Visual & High Impact */}
-          <section id="que-hacemos" className="py-24 bg-white">
+          <motion.section 
+            id="que-hacemos" 
+            initial="initial"
+            whileInView="whileInView"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={staggerContainer}
+            className="py-24 bg-white"
+          >
             <div className="max-w-7xl mx-auto px-6 md:px-12 space-y-16">
               
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-                <div className="lg:col-span-6 space-y-6">
+                <motion.div variants={fadeInUp} className="lg:col-span-6 space-y-6">
                   <span className="inline-block py-1 px-3 bg-indigo-50 border border-indigo-100 rounded text-indigo-700 font-sans text-[11px] tracking-widest uppercase font-semibold">
                     🎯 El Enlace que le Faltaba a tu Negocio
                   </span>
@@ -551,10 +585,10 @@ export default function App() {
                       </p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Grid Visual Cards: High Converting Delivery */}
-                <div className="lg:col-span-6 space-y-4">
+                <motion.div variants={fadeInUp} className="lg:col-span-6 space-y-4">
                   <div className="bg-surface-gray hover:bg-white p-5 rounded-2xl border border-border-subtle transition-all duration-300 hover:shadow-md flex gap-4">
                     <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 flex-shrink-0 border border-indigo-100">
                       <TrendingUp className="w-5 h-5" />
@@ -590,28 +624,34 @@ export default function App() {
                       </p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               </div>
 
             </div>
-          </section>
+          </motion.section>
 
           {/* Specifinance vs Traditional Differential Table - Optimized Comparison */}
-          <section className="py-20 bg-deep-navy text-white border-b border-white/10">
+          <motion.section 
+            initial="initial"
+            whileInView="whileInView"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={staggerContainer}
+            className="py-20 bg-deep-navy text-white border-b border-white/10"
+          >
             <div className="max-w-7xl mx-auto px-6 md:px-12 space-y-12">
-              <div className="text-center space-y-3">
+              <motion.div variants={fadeInUp} className="text-center space-y-3">
                 <h2 className="font-heading font-extrabold text-3xl md:text-4xl text-white">
                   ¿Por qué las empresas eligen a <span className="text-muted-gold font-bold">Specifinance</span>?
                 </h2>
                 <p className="text-white/60 text-xs tracking-wider uppercase font-mono max-w-lg mx-auto">
                   La diferencia radical de trabajar con un partner de crecimiento estratégico versus resolver las cosas a ciegas.
                 </p>
-              </div>
+              </motion.div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
                 {/* Traditional Side (Condensed Red) */}
-                <div className="bg-white/[0.02] border border-white/10 p-6 md:p-8 rounded-2xl space-y-5 transition-all hover:bg-white/[0.04]">
+                <motion.div variants={fadeInUp} className="bg-white/[0.02] border border-white/10 p-6 md:p-8 rounded-2xl space-y-5 transition-all duration-300 hover:bg-white/[0.04]">
                   <div className="flex items-center gap-3 border-b border-white/10 pb-4">
                     <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center text-red-500">
                       <X className="w-4 h-4" />
@@ -635,10 +675,10 @@ export default function App() {
                       <p className="text-[11px] text-white/50 leading-relaxed">Contrataciones de personal o aumentos de inventarios basados en corazonadas, arriesgando innecesariamente el capital.</p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Specifinance Side (Green Glow & Clear Impact) */}
-                <div className="bg-white/[0.06] border-2 border-indigo-500/30 p-6 md:p-8 rounded-2xl space-y-5 relative overflow-hidden transition-all hover:border-indigo-400">
+                <motion.div variants={fadeInUp} className="bg-white/[0.06] border-2 border-indigo-500/30 p-6 md:p-8 rounded-2xl space-y-5 relative overflow-hidden transition-all duration-300 hover:border-indigo-400 hover:shadow-[0_0_30px_rgba(79,70,229,0.15)]">
                   <div className="absolute top-0 right-0 bg-growth-green text-deep-navy font-mono text-[9px] px-3 py-1 uppercase font-bold tracking-widest rounded-bl">
                     Socio de Crecimiento
                   </div>
@@ -666,18 +706,25 @@ export default function App() {
                       <p className="text-[11px] text-white/70 leading-relaxed">Accede a la mesa de control de un director financiero calificado para planificar impuestos, deudas y liquidez a tu escala.</p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
 
               </div>
             </div>
-          </section>
+          </motion.section>
 
           {/* TWO PILLARS CORPORATE INTERACTION SECTION */}
-          <section className="py-24 bg-white border-b border-border-subtle" id="ejes-especializacion">
+          <motion.section 
+            initial="initial"
+            whileInView="whileInView"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={staggerContainer}
+            className="py-24 bg-white border-b border-border-subtle" 
+            id="ejes-especializacion"
+          >
             <div className="max-w-7xl mx-auto px-6 md:px-12 space-y-12">
               
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
-                <div className="lg:col-span-8 space-y-4">
+                <motion.div variants={fadeInUp} className="lg:col-span-8 space-y-4">
                   <span className="inline-flex py-1 px-3 bg-indigo-50 border border-indigo-100 rounded text-indigo-700 font-sans text-[11px] tracking-widest uppercase font-semibold">
                     🔑 Estructura Organizacional de Alto Valor
                   </span>
@@ -687,46 +734,54 @@ export default function App() {
                   <p className="text-charcoal-text text-sm md:text-base max-w-3xl leading-relaxed">
                     Specifinance es una firma boutique que no improvisa. Operamos bajo dos ejes estratégicos fundamentales independientes en su desarrollo técnico, pero sincronizados de forma operativa para que cada centavo invertido comercialmente esté respaldado por un diagnóstico financiero real.
                   </p>
-                </div>
+                </motion.div>
                 
-                <div className="lg:col-span-4 flex lg:justify-end">
+                <motion.div variants={fadeInUp} className="lg:col-span-4 flex lg:justify-end">
                   <div className="bg-slate-100 p-1 rounded-xl flex gap-1 w-full lg:w-auto" id="pillar-tabs">
                     <button
                       onClick={() => setActivePillarTab('financial')}
-                      className={`flex-1 lg:flex-initial text-center py-2.5 px-5 rounded-lg text-xs font-semibold tracking-wider transition-all duration-200 cursor-pointer ${
+                      className={`flex-1 lg:flex-initial text-center py-2.5 px-5 rounded-lg text-xs font-semibold tracking-wider transition-all duration-300 cursor-pointer ${
                         activePillarTab === 'financial'
-                          ? 'bg-deep-navy text-white shadow-md'
-                          : 'text-charcoal-text hover:text-deep-navy hover:bg-slate-50'
+                          ? 'bg-deep-navy text-white shadow-md transform scale-105'
+                          : 'text-charcoal-text hover:text-deep-navy hover:bg-white'
                       }`}
                     >
                       💼 Eje Financiero
                     </button>
                     <button
                       onClick={() => setActivePillarTab('marketing')}
-                      className={`flex-1 lg:flex-initial text-center py-2.5 px-5 rounded-lg text-xs font-semibold tracking-wider transition-all duration-200 cursor-pointer ${
+                      className={`flex-1 lg:flex-initial text-center py-2.5 px-5 rounded-lg text-xs font-semibold tracking-wider transition-all duration-300 cursor-pointer ${
                         activePillarTab === 'marketing'
-                          ? 'bg-deep-navy text-white shadow-md'
-                          : 'text-charcoal-text hover:text-deep-navy hover:bg-slate-50'
+                          ? 'bg-deep-navy text-white shadow-md transform scale-105'
+                          : 'text-charcoal-text hover:text-deep-navy hover:bg-white'
                       }`}
                     >
                       📢 Eje Marketing
                     </button>
                     <button
                       onClick={() => setActivePillarTab('synergy')}
-                      className={`flex-1 lg:flex-initial text-center py-2.5 px-5 rounded-lg text-xs font-semibold tracking-wider transition-all duration-200 cursor-pointer ${
+                      className={`flex-1 lg:flex-initial text-center py-2.5 px-5 rounded-lg text-xs font-semibold tracking-wider transition-all duration-300 cursor-pointer ${
                         activePillarTab === 'synergy'
-                          ? 'bg-deep-navy text-white shadow-md'
-                          : 'text-charcoal-text hover:text-deep-navy hover:bg-slate-50'
+                          ? 'bg-deep-navy text-white shadow-md transform scale-105'
+                          : 'text-charcoal-text hover:text-deep-navy hover:bg-white'
                       }`}
                     >
                       🔗 Ciclo de Sinergia
                     </button>
                   </div>
-                </div>
+                </motion.div>
               </div>
 
               {/* ACTIVE TAB CONTENT CONTAINER */}
-              <div className="bg-surface-gray rounded-2xl border border-border-subtle p-6 md:p-10 transition-all duration-500 hover:shadow-md">
+              <AnimatePresence mode="wait">
+                <motion.div 
+                  key={activePillarTab}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-surface-gray rounded-2xl border border-border-subtle p-6 md:p-10 hover:shadow-md transition-shadow"
+                >
                 
                 {/* 1. FINANCIAL PILLAR - Synthesized & Visual */}
                 {activePillarTab === 'financial' && (
@@ -975,15 +1030,23 @@ export default function App() {
                   </div>
                 )}
                 
-              </div>
+                </motion.div>
+              </AnimatePresence>
 
             </div>
-          </section>
+          </motion.section>
 
           {/* Financial Units Services list */}
-          <section id="servicios" className="py-24 bg-surface-gray border-b border-border-subtle">
+          <motion.section 
+            id="servicios" 
+            initial="initial"
+            whileInView="whileInView"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={staggerContainer}
+            className="py-24 bg-surface-gray border-b border-border-subtle"
+          >
             <div className="max-w-7xl mx-auto px-6 md:px-12 space-y-12">
-              <div className="text-center max-w-2xl mx-auto space-y-3">
+              <motion.div variants={fadeInUp} className="text-center max-w-2xl mx-auto space-y-3">
                 <span className="text-[10px] font-semibold text-muted-gold uppercase tracking-widest block font-mono">
                   Portafolio de Soluciones
                 </span>
@@ -993,12 +1056,12 @@ export default function App() {
                 <p className="text-charcoal-text text-xs leading-relaxed max-w-md mx-auto">
                   Seleccione el formato que mejor se alinee a su escala operativa actual para ver o simular su presupuesto.
                 </p>
-              </div>
+              </motion.div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
                 {/* Unit 1 */}
-                <div className="bg-white p-8 rounded-xl border border-border-subtle flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-indigo-100">
+                <motion.div variants={fadeInUp} className="bg-white p-8 rounded-xl border border-border-subtle flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-indigo-100">
                   <div className="space-y-4">
                     <span className="inline-block px-2.5 py-1 text-[9px] bg-indigo-600 text-white rounded font-mono font-bold tracking-widest uppercase shadow-sm">
                       MÁS SOLICITADO
@@ -1028,15 +1091,15 @@ export default function App() {
                   <div className="pt-8">
                     <button 
                       onClick={() => setActiveServiceModal('full-partner')}
-                      className="w-full text-center py-2.5 bg-deep-navy text-white hover:bg-indigo-900 shadow-sm transition-all text-xs font-semibold uppercase tracking-wider rounded"
+                      className="w-full text-center py-2.5 bg-deep-navy text-white hover:bg-indigo-900 shadow-sm transition-all text-xs font-semibold uppercase tracking-wider rounded border border-transparent"
                     >
                       Saber más e Iniciar Diagnóstico
                     </button>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Unit 2 */}
-                <div className="bg-white p-8 rounded-xl border border-border-subtle flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-indigo-100">
+                <motion.div variants={fadeInUp} className="bg-white p-8 rounded-xl border border-border-subtle flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-indigo-100">
                   <div className="space-y-4">
                     <span className="inline-block px-2.5 py-1 text-[9px] bg-slate-100 text-deep-navy rounded font-mono font-bold tracking-widest uppercase">
                       DIRECCIÓN ESTRUCTURAL
@@ -1071,10 +1134,10 @@ export default function App() {
                       Saber más e Iniciar Diagnóstico
                     </button>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Unit 3 */}
-                <div className="bg-white p-8 rounded-xl border border-border-subtle flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-indigo-100">
+                <motion.div variants={fadeInUp} className="bg-white p-8 rounded-xl border border-border-subtle flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-indigo-100">
                   <div className="space-y-4">
                     <span className="inline-block px-2.5 py-1 text-[9px] bg-slate-100 text-deep-navy rounded font-mono font-bold tracking-widest uppercase">
                       DATOS Y OPTIMIZACIÓN
@@ -1109,11 +1172,11 @@ export default function App() {
                       Saber más e Iniciar Diagnóstico
                     </button>
                   </div>
-                </div>
+                </motion.div>
 
               </div>
             </div>
-          </section>
+          </motion.section>
 
           {/* SF Growth Framework */}
           <section id="metodologia" className="py-24 bg-white border-b border-border-subtle">
@@ -1182,118 +1245,6 @@ export default function App() {
                   </div>
 
                 </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Interactive Metrics Grid indicators */}
-          <section id="resultados" className="py-24 bg-surface-gray border-b border-border-subtle">
-            <div className="max-w-7xl mx-auto px-6 md:px-12 space-y-12">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-border-subtle pb-8">
-                <div>
-                  <h2 className="font-heading font-extrabold text-3xl text-deep-navy">
-                    Los indicadores que realmente importan.
-                  </h2>
-                  <p className="text-charcoal-text text-sm mt-1">
-                    No medimos métricas de vanidad. Medimos impacto directo en el bolsillo y valoración de la compañía.
-                  </p>
-                </div>
-                <div className="bg-white px-5 py-3 rounded-lg border border-border-subtle flex-shrink-0 flex items-center gap-3.5 shadow-sm">
-                  <div className="w-2.5 h-2.5 rounded-full bg-growth-green" />
-                  <div>
-                    <span className="text-[10px] text-charcoal-text font-semibold uppercase tracking-wider block">
-                      Impacto Promedio Logrado
-                    </span>
-                    <span className="text-lg font-heading font-bold text-deep-navy">
-                      +24% EBITDA
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
-                {/* Card Group 1 */}
-                <div className="bg-white p-6 rounded-lg border border-border-subtle space-y-6">
-                  <h4 className="text-xs font-semibold uppercase tracking-widest text-deep-navy border-b border-slate-100 pb-3 block">
-                    1. Financieros clave
-                  </h4>
-                  <div className="space-y-4 text-xs">
-                    <div className="flex justify-between items-center border-b border-slate-50 pb-2">
-                      <span className="text-charcoal-text">EBITDA Trimestral</span>
-                      <span className="text-growth-green font-semibold flex items-center gap-1 font-mono">
-                        ↑ Crítico
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-slate-50 pb-2">
-                      <span className="text-charcoal-text">Planeación Financiera</span>
-                      <span className="text-growth-green font-semibold flex items-center gap-1 font-mono">
-                        ↑ Estructurada
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-charcoal-text">Flujo de Caja Libre Operativo</span>
-                      <span className="text-growth-green font-semibold flex items-center gap-1 font-mono">
-                        ↑ Resguardado
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card Group 2 */}
-                <div className="bg-white p-6 rounded-lg border border-border-subtle space-y-6">
-                  <h4 className="text-xs font-semibold uppercase tracking-widest text-deep-navy border-b border-slate-100 pb-3 block">
-                    2. Comerciales de Unit Economics
-                  </h4>
-                  <div className="space-y-4 text-xs">
-                    <div className="flex justify-between items-center border-b border-slate-50 pb-2">
-                      <span className="text-charcoal-text">CAC (Costo Adquisición Cliente)</span>
-                      <span className="text-red-500 font-semibold flex items-center gap-1 font-mono">
-                        ↓ Optimizado
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-slate-50 pb-2">
-                      <span className="text-charcoal-text">LTV (Life Time Value de usuario)</span>
-                      <span className="text-growth-green font-semibold flex items-center gap-1 font-mono">
-                        ↑ Escalado
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center font-mono">
-                      <span className="text-charcoal-text sans-serif text-xs">Tasa de Conversión General</span>
-                      <span className="text-growth-green font-semibold flex items-center gap-1">
-                        ↑ Incrementado
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card Group 3 */}
-                <div className="bg-white p-6 rounded-lg border border-border-subtle space-y-6">
-                  <h4 className="text-xs font-semibold uppercase tracking-widest text-deep-navy border-b border-slate-100 pb-3 block">
-                    3. Estratégicos globales
-                  </h4>
-                  <div className="space-y-4 text-xs">
-                    <div className="flex justify-between items-center border-b border-slate-50 pb-2">
-                      <span className="text-charcoal-text">Rentabilidad Empresarial</span>
-                      <span className="text-growth-green font-semibold flex items-center gap-1 font-mono">
-                        ↑ Optimizada
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-slate-50 pb-2">
-                      <span className="text-charcoal-text">Capacidad de Crecimiento</span>
-                      <span className="text-growth-green font-semibold flex items-center gap-1 font-mono">
-                        ↑ Escalada
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-charcoal-text">Valor Empresarial</span>
-                      <span className="text-growth-green font-semibold flex items-center gap-1 font-mono">
-                        ↑ Potenciado
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
               </div>
             </div>
           </section>
@@ -1575,24 +1526,24 @@ export default function App() {
                       </button>
                     </div>
 
-                    {/* Show interactive time slot scheduler customized with their form values */}
-                    <div className="bg-white text-deep-navy rounded-xl overflow-hidden shadow-2xl">
-                      <div className="bg-slate-100 p-4 border-b border-border-subtle flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-deep-navy" />
-                        <span className="text-xs font-bold text-deep-navy uppercase">
-                          SEGUNDO PASO: Reserve su bloque horario
-                        </span>
+                    <div className="bg-white text-deep-navy rounded-xl overflow-hidden shadow-2xl p-8 text-center space-y-4">
+                      <div className="mx-auto w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center">
+                        <Clock className="w-6 h-6" />
                       </div>
-                      <Scheduler 
-                        onBookingSuccess={(booking) => {
-                          // Change the lead status automatically inside the state database when successfully agendado
-                          handleUpdateLeadStatus(diagnosticLeadCreated.id, 'Reunión Agendada');
-                        }}
-                        preselectedService={diagnosticLeadCreated.serviceOfInterest}
-                        preselectedCompanyName={diagnosticLeadCreated.companyName}
-                        preselectedClientName={diagnosticLeadCreated.fullName}
-                        preselectedEmail={diagnosticLeadCreated.email}
-                      />
+                      <h4 className="font-heading font-bold text-lg text-deep-navy">
+                        Continúe en Calendly...
+                      </h4>
+                      <p className="text-sm text-charcoal-text max-w-sm mx-auto">
+                        Se ha abierto una nueva pestaña para que seleccione el horario de su consultoría. Si no se abrió automáticamente, puede acceder mediante el siguiente enlace:
+                      </p>
+                      <a 
+                        href="https://calendly.com/specifinance/consultoria"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-block mt-4 bg-deep-navy text-white px-6 py-2.5 rounded font-heading font-medium text-sm transition-all duration-300 hover:bg-indigo-900 border border-transparent shadow shadow-indigo-500/10"
+                      >
+                        Abrir Calendly
+                      </a>
                     </div>
 
                   </div>
@@ -1793,11 +1744,11 @@ export default function App() {
 
                     <button 
                       type="submit"
-                      className="w-full bg-deep-navy text-white hover:bg-black font-heading font-medium text-sm py-3.5 px-4 rounded transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md"
+                      className="w-full bg-deep-navy text-white hover:bg-indigo-900 font-heading font-medium text-sm py-3.5 px-4 rounded transition-all duration-300 cursor-pointer flex items-center justify-center gap-1.5 shadow-md hover:shadow-xl hover:-translate-y-1"
                       id="form-btn-submit"
                     >
-                      Enviar Solicitud de Diagnóstico
-                      <ArrowRight className="w-4 h-4 text-growth-green" />
+                      Enviar Solicitud de Diagnóstico y Agendar Cita
+                      <ArrowRight className="w-4 h-4 text-growth-green transition-transform group-hover:translate-x-1" />
                     </button>
 
                   </form>
@@ -1830,7 +1781,6 @@ export default function App() {
               <li><a href="#que-hacemos" className="hover:text-growth-green transition-colors">Qué hacemos</a></li>
               <li><a href="#servicios" className="hover:text-growth-green transition-colors">Unidades de Servicio</a></li>
               <li><a href="#metodologia" className="hover:text-growth-green transition-colors">SF Growth Framework</a></li>
-              <li><a href="#resultados" className="hover:text-growth-green transition-colors">Indicadores Clave</a></li>
             </ul>
           </div>
 
@@ -1851,10 +1801,10 @@ export default function App() {
             </h5>
             <ul className="space-y-2 text-white/50">
               <li className="flex items-center gap-2">
-                <Mail className="w-3.5 h-3.5 text-growth-green" /> info@specifinance.com
+                <Mail className="w-3.5 h-3.5 text-growth-green" /> specifinance@gmail.com
               </li>
               <li className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-growth-green" /> +57 (601) 321-4567
+                <Phone className="w-3.5 h-3.5 text-growth-green" /> +57 310 247 9396
               </li>
               <li className="flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5 text-growth-green" /> Bogotá D.C., Colombia
